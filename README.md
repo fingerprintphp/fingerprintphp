@@ -1,134 +1,72 @@
 # FingerprintPHP
 
-PHP wrapper for the [FingerprintJS](https://github.com/nicebyte/fingerprintjs) browser fingerprinting library.
+Track visitors across sessions without cookies.
+
+## Introduction
+
+This package provides a PHP wrapper for browser fingerprinting. It collects 40+ browser signals to generate a unique visitor identifier that persists across sessions, incognito windows, and cleared cookies.
+
+**[Read the full documentation](https://fingerprintphp.github.io/fingerprintphp/)**
 
 ## Installation
+
+You can install the package via composer:
 
 ```bash
 composer require fingerprintphp/fingerprintphp
 ```
 
-## Usage
+## Quick Start
 
-### Generate JavaScript Snippet
+Generate the JavaScript snippet for your page:
 
 ```php
-<?php
-
 use Fingerprintphp\FingerprintClient;
 
 $client = new FingerprintClient();
 
 echo $client->getJavaScript([
-    'endpoint' => '/your-endpoint.php',
+    'endpoint' => '/fingerprint.php',
     'autoSend' => true,
-    'debug' => false,
-    'callback' => 'onFingerprint',
 ]);
 ```
 
-### Handle Fingerprint Data
+Handle incoming fingerprint data on your endpoint:
 
 ```php
-<?php
-
 use Fingerprintphp\FingerprintClient;
 use Fingerprintphp\Storage\FileStorage;
 
 $client = new FingerprintClient([
-    'storage' => new FileStorage('/path/to/storage'),
+    'storage' => new FileStorage(__DIR__ . '/storage'),
 ]);
 
 $fingerprint = $client->handleRequest();
 $client->jsonResponse($fingerprint);
 ```
 
-### Lookup Fingerprint
+Look up a stored fingerprint by visitor ID:
 
 ```php
-<?php
-
 $fingerprint = $client->get($visitorId);
 
 echo $fingerprint->getVisitorId();
-echo $fingerprint->getIp();
 echo $fingerprint->getPlatform();
-echo $fingerprint->getTimezone();
-echo $fingerprint->getVendor();
+echo $fingerprint->getCanvas();
+echo $fingerprint->getWebgl();
+echo $fingerprint->getFonts();
 ```
 
-### Available Getters
+## Documentation
 
-| Method | Description |
-|--------|-------------|
-| `getVisitorId()` | Unique visitor identifier |
-| `getConfidence()` | Confidence score |
-| `getIp()` | Client IP address |
-| `getUserAgent()` | User agent string |
-| `getPlatform()` | OS platform |
-| `getTimezone()` | Timezone |
-| `getLanguages()` | Browser languages |
-| `getScreenResolution()` | Screen resolution |
-| `getColorDepth()` | Color depth |
-| `getDeviceMemory()` | Device memory (GB) |
-| `getHardwareConcurrency()` | CPU cores |
-| `getCanvas()` | Canvas fingerprint |
-| `getWebgl()` | WebGL fingerprint |
-| `getAudio()` | Audio fingerprint |
-| `getFonts()` | Installed fonts |
-| `getPlugins()` | Browser plugins |
-| `getCookiesEnabled()` | Cookies enabled |
-| `getLocalStorage()` | LocalStorage available |
-| `getSessionStorage()` | SessionStorage available |
-| `getIndexedDb()` | IndexedDB available |
-| `getTouchSupport()` | Touch support info |
-| `getVendor()` | Browser vendor |
-| `getArchitecture()` | CPU architecture |
-| `getCreatedAt()` | Timestamp |
+Full documentation is available at **[fingerprintphp.github.io/fingerprintphp](https://fingerprintphp.github.io/fingerprintphp/)**
 
-### Custom Storage
-
-Implement `StorageInterface` for custom storage:
-
-```php
-<?php
-
-use Fingerprintphp\Storage\StorageInterface;
-use Fingerprintphp\FingerprintData;
-
-class DatabaseStorage implements StorageInterface
-{
-    public function save(FingerprintData $data): bool
-    {
-        // Save to database
-    }
-
-    public function get(string $visitorId): ?FingerprintData
-    {
-        // Get from database
-    }
-
-    public function getByIp(string $ip): ?FingerprintData
-    {
-        // Get by IP
-    }
-
-    public function exists(string $visitorId): bool
-    {
-        // Check existence
-    }
-
-    public function delete(string $visitorId): bool
-    {
-        // Delete record
-    }
-
-    public function all(): array
-    {
-        // Get all records
-    }
-}
-```
+- [Installation](https://fingerprintphp.github.io/fingerprintphp/getting-started/installation/)
+- [Quick Start](https://fingerprintphp.github.io/fingerprintphp/getting-started/quickstart/)
+- [API Reference](https://fingerprintphp.github.io/fingerprintphp/api/fingerprint-client/)
+- [All 40+ Getters](https://fingerprintphp.github.io/fingerprintphp/api/fingerprint-data/)
+- [Custom Storage](https://fingerprintphp.github.io/fingerprintphp/storage/custom-storage/)
+- [Laravel Integration](https://fingerprintphp.github.io/fingerprintphp/guides/laravel/)
 
 ## License
 
