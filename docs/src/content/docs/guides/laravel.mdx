@@ -1,0 +1,139 @@
+---
+title: Laravel Integration
+description: Use FingerprintPHP with Laravel
+---
+
+This package works with Laravel out of the box. No service provider required.
+
+## Controller
+
+Create a controller to handle fingerprints:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Fingerprintphp\FingerprintClient;
+use Fingerprintphp\Storage\FileStorage;
+
+class FingerprintController extends Controller
+{
+    private FingerprintClient $client;
+
+    public function __construct()
+    {
+        $this->client = new FingerprintClient([
+            'storage' => new FileStorage(storage_path('fingerprints')),
+        ]);
+    }
+
+    public function store()
+    {
+        $fingerprint = $this->client->handleRequest();
+        return response()->json([
+            'success' => true,
+            'visitorId' => $fingerprint->getVisitorId(),
+        ]);
+    }
+
+    public function show(string $visitorId)
+    {
+        $fingerprint = $this->client->get($visitorId);
+        if (!$fingerprint) abort(404);
+        return response()->json($fingerprint->toArray());
+    }
+}
+```
+
+## Routes
+
+Register the routes:
+
+```php
+Route::post('/fingerprint', [FingerprintController::class, 'store']);
+Route::get('/fingerprint/{visitorId}', [FingerprintController::class, 'show']);
+```
+
+## Blade Integration
+
+Include the JavaScript snippet in your Blade template:
+
+```blade
+@php
+    $fpClient = new \Fingerprintphp\FingerprintClient();
+@endphp
+
+{!! $fpClient->getJavaScript([
+    'endpoint' => route('fingerprint.store'),
+    'autoSend' => true,
+]) !!}
+```
+
+## Eloquent Storage
+
+For production, use an Eloquent-based storage:
+
+```php
+<?php
+
+namespace App\Storage;
+
+use Fingerprintphp\Storage\StorageInterface;
+use Fingerprintphp\FingerprintData;
+use App\Models\Fingerprint;
+
+class EloquentStorage implements StorageInterface
+{
+    public function save(FingerprintData $data): bool
+    {
+        Fingerprint::updateOrCreate(
+            ['visitor_id' => $data->getVisitorId()],
+            ['ip' => $data->getIp(), 'data' => $data->toArray()]
+        );
+        return true;
+    }
+
+    public function get(string $visitorId): ?FingerprintData
+    {
+        $record = Fingerprint::where('visitor_id', $visitorId)->first();
+        return $record ? new FingerprintData($record->data) : null;
+    }
+
+    public function getByIp(string $ip): ?FingerprintData
+    {
+        $record = Fingerprint::where('ip', $ip)->latest()->first();
+        return $record ? new FingerprintData($record->data) : null;
+    }
+
+    public function exists(string $visitorId): bool
+    {
+        return Fingerprint::where('visitor_id', $visitorId)->exists();
+    }
+
+    public function delete(string $visitorId): bool
+    {
+        return Fingerprint::where('visitor_id', $visitorId)->delete() > 0;
+    }
+
+    public function all(): array
+    {
+        return Fingerprint::all()
+            ->map(fn($r) => new FingerprintData($r->data))
+            ->toArray();
+    }
+}
+```
+
+## Migration
+
+Create the migration:
+
+```php
+Schema::create('fingerprints', function (Blueprint $table) {
+    $table->string('visitor_id', 64)->primary();
+    $table->string('ip', 45)->index();
+    $table->json('data');
+    $table->timestamps();
+});
+```

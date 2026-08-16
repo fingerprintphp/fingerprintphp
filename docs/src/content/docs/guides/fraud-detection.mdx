@@ -1,0 +1,99 @@
+---
+title: Fraud Detection
+description: Detect suspicious behavior with fingerprints
+---
+
+Fingerprints help detect fraud. Same device, different accounts is a red flag.
+
+## The Problem
+
+Fraudsters create multiple accounts to abuse promotions, manipulate reviews, or evade bans. They clear cookies, use incognito mode, and change IPs. Fingerprints see through these techniques.
+
+## Basic Detection
+
+Track which accounts share a fingerprint:
+
+```php
+<?php
+
+class FraudDetector
+{
+    private FingerprintClient $client;
+    private PDO $db;
+
+    public function checkSignup(string $visitorId, int $userId): array
+    {
+        $flags = [];
+
+        $stmt = $this->db->prepare(
+            "SELECT user_id FROM user_fingerprints
+             WHERE visitor_id = :vid AND user_id != :uid"
+        );
+        $stmt->execute(['vid' => $visitorId, 'uid' => $userId]);
+        $existing = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($existing) > 0) {
+            $flags[] = [
+                'type' => 'duplicate_device',
+                'severity' => count($existing) > 2 ? 'high' : 'medium',
+                'accounts' => array_column($existing, 'user_id'),
+            ];
+        }
+
+        $this->db->prepare(
+            "INSERT IGNORE INTO user_fingerprints (user_id, visitor_id, created_at)
+             VALUES (:uid, :vid, NOW())"
+        )->execute(['uid' => $userId, 'vid' => $visitorId]);
+
+        return $flags;
+    }
+}
+```
+
+## Risk Scoring
+
+Assign a risk score based on fingerprint patterns:
+
+```php
+public function calculateRiskScore(string $visitorId): int
+{
+    $score = 0;
+    $fp = $this->client->get($visitorId);
+
+    if (!$fp) return 100;
+
+    $accountCount = $this->getAccountCount($visitorId);
+    if ($accountCount > 1) $score += 30;
+    if ($accountCount > 3) $score += 40;
+
+    if ($fp->getCookiesEnabled() === false) $score += 15;
+    if (empty($fp->getPlugins())) $score += 10;
+
+    if (str_contains($fp->getUserAgent() ?? '', 'HeadlessChrome')) {
+        $score += 50;
+    }
+
+    $confidence = $fp->getConfidence() ?? 0;
+    if ($confidence < 0.5) $score += 20;
+
+    return min($score, 100);
+}
+```
+
+## Database Schema
+
+Create the tracking table:
+
+```sql
+CREATE TABLE user_fingerprints (
+    user_id INT NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, visitor_id),
+    INDEX idx_visitor (visitor_id)
+);
+```
+
+## Accuracy Considerations
+
+Fingerprints are not perfect. False positives occur with shared computers, company networks, VPNs, and browser updates. Use fingerprints as one signal among many. Combine with email verification, phone verification, payment history, and behavioral analysis for better accuracy.

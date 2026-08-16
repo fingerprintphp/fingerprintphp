@@ -1,0 +1,80 @@
+---
+title: Handling Requests
+description: Receive and store fingerprint data
+---
+
+Your endpoint receives a POST with JSON data. The `handleRequest()` method parses it, builds a `FingerprintData` object, and stores it.
+
+## Basic Handler
+
+Create a minimal handler:
+
+```php
+<?php
+use Fingerprintphp\FingerprintClient;
+
+$client = new FingerprintClient();
+
+$fingerprint = $client->handleRequest();
+$client->jsonResponse($fingerprint);
+```
+
+This stores fingerprints in the system temp directory and returns a JSON success response.
+
+## Custom Storage Path
+
+To store fingerprints in a specific directory:
+
+```php
+use Fingerprintphp\Storage\FileStorage;
+
+$client = new FingerprintClient([
+    'storage' => new FileStorage('/var/data/fingerprints'),
+]);
+```
+
+## Stored Data
+
+The handler captures everything FingerprintJS collects, plus server-side data:
+
+- `visitorId`: The unique hash
+- `confidence`: Confidence score from 0 to 1
+- All browser components (canvas, webgl, audio, fonts, and more)
+- `ip`: Client IP address
+- `userAgent`: Browser user agent
+- `createdAt`: Unix timestamp
+
+## Error Handling
+
+Wrap the handler in a try/catch block:
+
+```php
+try {
+    $fingerprint = $client->handleRequest();
+    $client->jsonResponse($fingerprint);
+} catch (\Fingerprintphp\FingerprintException $e) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+    ]);
+}
+```
+
+Common errors include missing `visitorId` in the POST data, invalid JSON, and storage write failures.
+
+## Manual Data Input
+
+To pass data directly without using the JavaScript snippet:
+
+```php
+$fingerprint = $client->handleRequest([
+    'visitorId' => 'abc123',
+    'components' => [
+        'platform' => 'MacIntel',
+        'timezone' => 'America/New_York',
+    ],
+]);
+```
+
+This is useful for testing or when fingerprint data comes from a different source.

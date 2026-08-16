@@ -1,0 +1,138 @@
+---
+title: Custom Storage
+description: Build your own storage backend
+---
+
+File storage does not scale for production traffic. Implement `StorageInterface` to use a database, Redis, or any other backend.
+
+## The Interface
+
+Implement all six methods:
+
+```php
+namespace Fingerprintphp\Storage;
+
+use Fingerprintphp\FingerprintData;
+
+interface StorageInterface
+{
+    public function save(FingerprintData $data): bool;
+    public function get(string $visitorId): ?FingerprintData;
+    public function getByIp(string $ip): ?FingerprintData;
+    public function exists(string $visitorId): bool;
+    public function delete(string $visitorId): bool;
+    public function all(): array;
+}
+```
+
+## Database Example
+
+A MySQL implementation using PDO:
+
+```php
+<?php
+
+namespace App\Storage;
+
+use Fingerprintphp\Storage\StorageInterface;
+use Fingerprintphp\FingerprintData;
+use PDO;
+
+class DatabaseStorage implements StorageInterface
+{
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function save(FingerprintData $data): bool
+    {
+        $sql = "INSERT INTO fingerprints (visitor_id, ip, data, created_at)
+                VALUES (:visitor_id, :ip, :data, :created_at)
+                ON DUPLICATE KEY UPDATE data = :data, ip = :ip";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute([
+            'visitor_id' => $data->getVisitorId(),
+            'ip' => $data->getIp(),
+            'data' => json_encode($data->toArray()),
+            'created_at' => date('Y-m-d H:i:s', $data->getCreatedAt()),
+        ]);
+    }
+
+    public function get(string $visitorId): ?FingerprintData
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT data FROM fingerprints WHERE visitor_id = :id"
+        );
+        $stmt->execute(['id' => $visitorId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? new FingerprintData(json_decode($row['data'], true)) : null;
+    }
+
+    public function getByIp(string $ip): ?FingerprintData
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT data FROM fingerprints WHERE ip = :ip ORDER BY created_at DESC LIMIT 1"
+        );
+        $stmt->execute(['ip' => $ip]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? new FingerprintData(json_decode($row['data'], true)) : null;
+    }
+
+    public function exists(string $visitorId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM fingerprints WHERE visitor_id = :id");
+        $stmt->execute(['id' => $visitorId]);
+        return (bool) $stmt->fetch();
+    }
+
+    public function delete(string $visitorId): bool
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM fingerprints WHERE visitor_id = :id");
+        return $stmt->execute(['id' => $visitorId]);
+    }
+
+    public function all(): array
+    {
+        $stmt = $this->pdo->query("SELECT data FROM fingerprints");
+        $results = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $results[] = new FingerprintData(json_decode($row['data'], true));
+        }
+        return $results;
+    }
+}
+```
+
+## Migration
+
+Create the database table:
+
+```sql
+CREATE TABLE fingerprints (
+    visitor_id VARCHAR(64) PRIMARY KEY,
+    ip VARCHAR(45),
+    data JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip (ip)
+);
+```
+
+## Wire It Up
+
+Pass your storage instance to the client:
+
+```php
+$pdo = new PDO('mysql:host=localhost;dbname=myapp', 'user', 'pass');
+$storage = new DatabaseStorage($pdo);
+
+$client = new FingerprintClient([
+    'storage' => $storage,
+]);
+```

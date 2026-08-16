@@ -1,0 +1,83 @@
+---
+// Custom footer component
+---
+
+<footer class="site-footer">
+  <div class="footer-content">
+    <article class="about-maylancer">
+      <small>Brought to you by</small>
+      <img src="/fingerprintphp/maylancer-logo.png" alt="Maylancer" class="maylancer-logo" />
+      <p>Maylancer builds open-source PHP packages and developer tools. We create software that solves real problems without unnecessary complexity.</p>
+      <p><a href="https://github.com/fingerprintphp">View our packages on GitHub</a></p>
+    </article>
+  </div>
+  <div class="footer-bottom">
+    <p>FingerprintPHP is open source under MIT license.</p>
+    <p class="credits">Built with <a href="https://starlight.astro.build">Starlight</a></p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--sl-color-gray-5);
+    padding: 3rem 1rem;
+    margin-top: 3rem;
+  }
+
+  .footer-content {
+    max-width: 65ch;
+    margin: 0 auto;
+  }
+
+  .about-maylancer {
+    text-align: center;
+  }
+
+  .about-maylancer small {
+    display: block;
+    color: var(--sl-color-gray-3);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .maylancer-logo {
+    height: 3rem;
+    width: auto;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .about-maylancer p {
+    color: var(--sl-color-gray-2);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin: 0.75rem 0;
+  }
+
+  .about-maylancer a {
+    color: var(--sl-color-text-accent);
+    text-decoration: none;
+  }
+
+  .about-maylancer a:hover {
+    text-decoration: underline;
+  }
+
+  .footer-bottom {
+    max-width: 65ch;
+    margin: 2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--sl-color-gray-6);
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .footer-bottom p {
+    margin: 0.25rem 0;
+  }
+
+  .credits a {
+    color: var(--sl-color-gray-2);
+  }
+</style>

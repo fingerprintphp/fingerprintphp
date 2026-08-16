@@ -1,0 +1,120 @@
+---
+title: Vanilla PHP
+description: Use FingerprintPHP without a framework
+---
+
+This package works without any framework.
+
+## Project Structure
+
+A typical project layout:
+
+```
+myproject/
+├── public/
+│   ├── index.php
+│   └── fingerprint.php
+├── storage/fingerprints/
+├── vendor/
+└── composer.json
+```
+
+## Frontend Page
+
+Create `public/index.php`:
+
+```php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Fingerprintphp\FingerprintClient;
+
+$client = new FingerprintClient();
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Site</title>
+</head>
+<body>
+    <h1>Welcome</h1>
+
+    <?= $client->getJavaScript([
+        'endpoint' => '/fingerprint.php',
+        'autoSend' => true,
+        'callback' => 'onFingerprint',
+    ]) ?>
+
+    <script>
+    function onFingerprint(result, data) {
+        console.log('Visitor ID:', data.visitorId);
+    }
+    </script>
+</body>
+</html>
+```
+
+## Endpoint Handler
+
+Create `public/fingerprint.php`:
+
+```php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Fingerprintphp\FingerprintClient;
+use Fingerprintphp\Storage\FileStorage;
+
+header('Content-Type: application/json');
+
+$client = new FingerprintClient([
+    'storage' => new FileStorage(__DIR__ . '/../storage/fingerprints'),
+]);
+
+try {
+    $fingerprint = $client->handleRequest();
+    echo json_encode([
+        'success' => true,
+        'visitorId' => $fingerprint->getVisitorId(),
+    ]);
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
+```
+
+## Lookup Page
+
+Create `public/lookup.php`:
+
+```php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Fingerprintphp\FingerprintClient;
+use Fingerprintphp\Storage\FileStorage;
+
+$client = new FingerprintClient([
+    'storage' => new FileStorage(__DIR__ . '/../storage/fingerprints'),
+]);
+
+$visitorId = $_GET['id'] ?? null;
+
+if ($visitorId) {
+    $fp = $client->get($visitorId);
+    if ($fp) {
+        header('Content-Type: application/json');
+        echo json_encode($fp->toArray(), JSON_PRETTY_PRINT);
+    } else {
+        http_response_code(404);
+        echo 'Not found';
+    }
+} else {
+    echo '<h1>All Fingerprints</h1><ul>';
+    foreach ($client->all() as $fp) {
+        $id = htmlspecialchars($fp->getVisitorId());
+        echo "<li><a href='?id={$id}'>{$id}</a></li>";
+    }
+    echo '</ul>';
+}
+```

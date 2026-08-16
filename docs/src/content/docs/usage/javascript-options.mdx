@@ -1,0 +1,72 @@
+---
+title: JavaScript Options
+description: Configure the client-side fingerprint script
+---
+
+The `getJavaScript()` method accepts an array of options:
+
+```php
+$client->getJavaScript([
+    'endpoint' => '/fingerprint.php',
+    'autoSend' => true,
+    'debug' => false,
+    'callback' => 'myCallback',
+]);
+```
+
+## endpoint
+
+The URL where fingerprint data is sent. This should be the path to your PHP handler.
+
+If you omit this and set `autoSend` to false, the script will not POST anywhere. Handle the data yourself in the callback.
+
+## autoSend
+
+Default: `true`
+
+When set to true, the script POSTs fingerprint data to your endpoint automatically. Set it to false to intercept the data first or send it manually.
+
+## debug
+
+Default: `false`
+
+Logs the fingerprint object to the browser console. Turn it off in production.
+
+## callback
+
+A JavaScript function name (as a string) that runs after fingerprinting completes:
+
+```php
+$client->getJavaScript([
+    'callback' => 'handleFingerprint',
+]);
+```
+
+The callback receives two arguments:
+
+```javascript
+function handleFingerprint(serverResult, fingerprintData) {
+    // serverResult: response from your endpoint (null if autoSend is false)
+    // fingerprintData: the raw fingerprint object
+    console.log(fingerprintData.visitorId);
+}
+```
+
+## Manual Sending
+
+To grab the fingerprint but send it yourself:
+
+```php
+<?= $client->getJavaScript([
+    'autoSend' => false,
+    'callback' => 'gotFingerprint',
+]) ?>
+
+<script>
+function gotFingerprint(_, data) {
+    document.getElementById('visitor_id').value = data.visitorId;
+}
+</script>
+```
+
+The fingerprint runs on page load. By the time the user submits a form, the visitor ID is ready.

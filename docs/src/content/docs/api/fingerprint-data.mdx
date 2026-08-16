@@ -1,0 +1,116 @@
+---
+title: FingerprintData
+description: Data object with all fingerprint getters
+---
+
+This class holds all fingerprint data. It implements `JsonSerializable` for direct use with `json_encode()`.
+
+## Core Getters
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getVisitorId()` | `?string` | Unique fingerprint hash |
+| `getRequestId()` | `?string` | Request identifier |
+| `getConfidence()` | `?float` | Confidence score from 0 to 1 |
+| `getCreatedAt()` | `?int` | Unix timestamp |
+
+## Server-Captured Data
+
+| Method | Returns |
+|--------|---------|
+| `getIp()` | `?string` |
+| `getUserAgent()` | `?string` |
+
+## Browser Information
+
+| Method | Returns |
+|--------|---------|
+| `getPlatform()` | `?string` |
+| `getVendor()` | `?string` |
+| `getVendorFlavors()` | `?array` |
+| `getArchitecture()` | `?string` |
+| `getCpuClass()` | `?string` |
+| `getOsCpu()` | `?string` |
+
+## Screen Data
+
+| Method | Returns |
+|--------|---------|
+| `getScreenResolution()` | `?array` |
+| `getScreenFrame()` | `?array` |
+| `getColorDepth()` | `?int` |
+| `getColorGamut()` | `?string` |
+| `getMonochrome()` | `?int` |
+| `getHdr()` | `?bool` |
+| `getContrast()` | `?string` |
+| `getInvertedColors()` | `?bool` |
+| `getForcedColors()` | `?bool` |
+| `getReducedMotion()` | `?bool` |
+| `getReducedTransparency()` | `?bool` |
+
+## Hardware Data
+
+| Method | Returns |
+|--------|---------|
+| `getDeviceMemory()` | `?int` |
+| `getHardwareConcurrency()` | `?int` |
+| `getTouchSupport()` | `?array` |
+
+## Locale Data
+
+| Method | Returns |
+|--------|---------|
+| `getTimezone()` | `?string` |
+| `getLanguages()` | `?array` |
+| `getDateTimeLocale()` | `?string` |
+
+## Storage Capabilities
+
+| Method | Returns |
+|--------|---------|
+| `getCookiesEnabled()` | `?bool` |
+| `getLocalStorage()` | `?bool` |
+| `getSessionStorage()` | `?bool` |
+| `getIndexedDb()` | `?bool` |
+| `getOpenDatabase()` | `?bool` |
+
+## Fingerprint Signals
+
+| Method | Returns |
+|--------|---------|
+| `getCanvas()` | `?string` |
+| `getWebgl()` | `?string` |
+| `getAudio()` | `?string` |
+| `getAudioBaseLatency()` | `?string` |
+| `getMath()` | `?string` |
+| `getFonts()` | `?array` |
+| `getFontPreferences()` | `?array` |
+
+## Browser Features
+
+| Method | Returns |
+|--------|---------|
+| `getPlugins()` | `?array` |
+| `getPdfViewerEnabled()` | `?bool` |
+| `getDomBlockers()` | `?array` |
+| `getApplePay()` | `?string` |
+| `getPrivateClickMeasurement()` | `?bool` |
+| `getUserAgentData()` | `?array` |
+
+## Utility Methods
+
+### toArray
+
+Returns all data as an associative array:
+
+```php
+$array = $fingerprint->toArray();
+```
+
+### jsonSerialize
+
+Same as `toArray()`. Makes the object work with `json_encode()`:
+
+```php
+echo json_encode($fingerprint, JSON_PRETTY_PRINT);
+```

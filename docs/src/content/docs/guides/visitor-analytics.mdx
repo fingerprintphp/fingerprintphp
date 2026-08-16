@@ -1,0 +1,114 @@
+---
+title: Visitor Analytics
+description: Track unique visitors without cookies
+---
+
+Count real visitors, not page views. Fingerprints provide accurate counts even when users block cookies.
+
+## The Problem
+
+Cookie-based analytics undercount. Users clear cookies, use multiple browsers, and go incognito. This inflates unique visitor numbers with the same people counted multiple times.
+
+## Tracking Visitors
+
+Track unique visitors per day:
+
+```php
+<?php
+
+class VisitorTracker
+{
+    private FingerprintClient $client;
+    private PDO $db;
+
+    public function track(string $visitorId, string $pageUrl): void
+    {
+        $date = date('Y-m-d');
+
+        $this->db->prepare(
+            "INSERT INTO page_visits (visitor_id, page_url, visited_at)
+             VALUES (:vid, :url, NOW())"
+        )->execute(['vid' => $visitorId, 'url' => $pageUrl]);
+
+        $this->db->prepare(
+            "INSERT INTO daily_visitors (date, visitor_id, first_seen)
+             VALUES (:date, :vid, NOW())
+             ON DUPLICATE KEY UPDATE visit_count = visit_count + 1"
+        )->execute(['date' => $date, 'vid' => $visitorId]);
+    }
+
+    public function getDailyUniques(string $date): int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(DISTINCT visitor_id) FROM daily_visitors WHERE date = :date"
+        );
+        $stmt->execute(['date' => $date]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function getReturningVisitors(string $date): int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM daily_visitors
+             WHERE date = :date AND visitor_id IN (
+                 SELECT visitor_id FROM daily_visitors WHERE date < :date
+             )"
+        );
+        $stmt->execute(['date' => $date]);
+        return (int) $stmt->fetchColumn();
+    }
+}
+```
+
+## Device Statistics
+
+Break down visitors by device type:
+
+```php
+public function getDeviceStats(): array
+{
+    $fingerprints = $this->client->all();
+    $stats = ['platforms' => [], 'mobile' => 0, 'desktop' => 0];
+
+    foreach ($fingerprints as $fp) {
+        $platform = $fp->getPlatform() ?? 'Unknown';
+        $stats['platforms'][$platform] = ($stats['platforms'][$platform] ?? 0) + 1;
+
+        $touch = $fp->getTouchSupport();
+        if ($touch && ($touch['maxTouchPoints'] ?? 0) > 0) {
+            $stats['mobile']++;
+        } else {
+            $stats['desktop']++;
+        }
+    }
+
+    arsort($stats['platforms']);
+    return $stats;
+}
+```
+
+## Database Schema
+
+Create the analytics tables:
+
+```sql
+CREATE TABLE page_visits (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    visitor_id VARCHAR(64) NOT NULL,
+    page_url VARCHAR(500) NOT NULL,
+    visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_visitor (visitor_id)
+);
+
+CREATE TABLE daily_visitors (
+    date DATE NOT NULL,
+    visitor_id VARCHAR(64) NOT NULL,
+    first_seen TIMESTAMP NOT NULL,
+    visit_count INT DEFAULT 1,
+    PRIMARY KEY (date, visitor_id)
+);
+```
+
+## Privacy Considerations
+
+Fingerprinting raises privacy concerns. Add disclosure to your privacy policy. Provide opt-out mechanisms. Anonymize data after a retention period. Check local regulations such as GDPR and CCPA before deployment.

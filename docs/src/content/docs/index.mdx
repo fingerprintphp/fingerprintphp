@@ -1,0 +1,55 @@
+---
+title: FingerprintPHP
+description: Track visitors across sessions without cookies
+template: splash
+hero:
+  tagline: Track visitors across sessions without cookies
+  actions:
+    - text: Get Started
+      link: /fingerprintphp/getting-started/installation/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/fingerprintphp/fingerprintphp
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Introduction
+
+This package provides a PHP wrapper for browser fingerprinting. It generates a unique visitor identifier that persists across sessions, incognito mode, and cookie purges. You get a JavaScript snippet for your frontend and a storage layer for your backend.
+
+<CardGrid stagger>
+	<Card title="No Cookies Needed" icon="approve-check">
+		Browser fingerprints persist across incognito sessions and data purges.
+	</Card>
+	<Card title="40+ Data Points" icon="list-format">
+		Canvas, WebGL, audio, fonts, screen, hardware, timezone, and more.
+	</Card>
+	<Card title="Simple API" icon="rocket">
+		One Composer require. Drop in the JavaScript snippet. Done.
+	</Card>
+	<Card title="Flexible Storage" icon="setting">
+		File storage out of the box. Swap in MySQL, Redis, or any custom backend.
+	</Card>
+</CardGrid>
+
+## Quick Example
+
+Here's how you can use it:
+
+```php
+use Fingerprintphp\FingerprintClient;
+
+$client = new FingerprintClient();
+
+// Output the JavaScript snippet in your HTML
+echo $client->getJavaScript(['endpoint' => '/fingerprint.php']);
+
+// Handle the incoming fingerprint in your endpoint
+$fingerprint = $client->handleRequest();
+echo $fingerprint->getVisitorId();
+```
+
+The JavaScript collects browser attributes and POSTs them to your endpoint. The PHP handler stores the fingerprint and returns it for later lookup.

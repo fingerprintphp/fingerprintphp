@@ -1,0 +1,28 @@
+---
+title: Installation
+description: Install FingerprintPHP via Composer
+---
+
+## Installation
+
+You can install the package via Composer:
+
+```bash
+composer require fingerprintphp/fingerprintphp
+```
+
+No configuration files to publish. No service providers to register. The package works out of the box.
+
+## Requirements
+
+This package requires PHP 8.0 or higher. The JSON extension must be enabled.
+
+## What the Package Contains
+
+This package provides three things:
+
+- A JavaScript snippet that runs FingerprintJS in the browser
+- A PHP handler that receives and stores fingerprint data
+- Getters to look up stored fingerprints by visitor ID or IP address
+
+Browser fingerprinting happens client-side. The PHP wrapper handles receiving the data, storing it, and querying it later.

@@ -1,0 +1,120 @@
+---
+title: FingerprintClient
+description: Main client class reference
+---
+
+The main class. Handles JavaScript generation, request processing, and fingerprint lookups.
+
+## Constructor
+
+Create a new client instance:
+
+```php
+use Fingerprintphp\FingerprintClient;
+
+$client = new FingerprintClient([
+    'storage' => $storageInstance,
+    'endpointUrl' => '/fingerprint.php',
+]);
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `storage` | `StorageInterface` | Where to store fingerprints. Defaults to `FileStorage` in the system temp directory. |
+| `endpointUrl` | `string` | Default endpoint for the JavaScript snippet. |
+
+## getJavaScript
+
+Returns the JavaScript snippet to include in your HTML:
+
+```php
+echo $client->getJavaScript([
+    'endpoint' => '/fingerprint.php',
+    'autoSend' => true,
+    'debug' => false,
+    'callback' => 'onFingerprint',
+]);
+```
+
+Read more about JavaScript options in the [JavaScript Options](/fingerprintphp/usage/javascript-options/) documentation.
+
+## handleRequest
+
+Processes incoming fingerprint data and stores it:
+
+```php
+$fingerprint = $client->handleRequest();
+```
+
+This method reads from `php://input` by default. Pass an array to skip input parsing.
+
+## get
+
+Retrieves a stored fingerprint by visitor ID:
+
+```php
+$fp = $client->get('abc123xyz');
+```
+
+Returns `null` if not found.
+
+## getByIp
+
+Finds a fingerprint by IP address:
+
+```php
+$fp = $client->getByIp('192.168.1.1');
+$fp = $client->getByIp(); // Uses current client IP
+```
+
+## exists
+
+Checks if a fingerprint exists:
+
+```php
+if ($client->exists($visitorId)) {
+    // Returning visitor
+}
+```
+
+## delete
+
+Removes a stored fingerprint:
+
+```php
+$client->delete('abc123xyz');
+```
+
+## all
+
+Returns all stored fingerprints as an array of `FingerprintData` objects:
+
+```php
+foreach ($client->all() as $fp) {
+    echo $fp->getVisitorId() . "\n";
+}
+```
+
+## jsonResponse
+
+Outputs a JSON response with the correct content type header:
+
+```php
+$client->jsonResponse($fingerprint);
+```
+
+## setStorage
+
+Swaps the storage implementation:
+
+```php
+$client->setStorage(new DatabaseStorage());
+```
+
+## getStorage
+
+Returns the current storage instance.
+
+## getCdnUrl
+
+Returns the FingerprintJS CDN URL being used.

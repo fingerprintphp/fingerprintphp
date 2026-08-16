@@ -1,0 +1,4 @@
+/* Hide default starlight footer since we use custom */
+.sl-flex.credits {
+  display: none;
+}

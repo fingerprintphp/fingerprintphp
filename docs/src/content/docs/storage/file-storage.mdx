@@ -1,0 +1,51 @@
+---
+title: File Storage
+description: Store fingerprints as JSON files
+---
+
+This is the default storage. It saves each fingerprint as a JSON file on disk.
+
+## Usage
+
+Create a file storage instance with a custom path:
+
+```php
+use Fingerprintphp\FingerprintClient;
+use Fingerprintphp\Storage\FileStorage;
+
+$storage = new FileStorage('/var/data/fingerprints');
+
+$client = new FingerprintClient([
+    'storage' => $storage,
+]);
+```
+
+If you do not pass a path, it uses the system temp directory.
+
+## How It Works
+
+Each fingerprint becomes a file named `{visitorId}.json`:
+
+```
+/var/data/fingerprints/
+├── abc123xyz.json
+├── def456uvw.json
+└── ghi789rst.json
+```
+
+## When to Use File Storage
+
+File storage works well for:
+
+- Small projects
+- Development and testing
+- Situations where database overhead is unwanted
+
+It does not scale well. If you are storing thousands of fingerprints or need fast lookups, implement a database storage instead. Read more about custom storage in the [Custom Storage](/fingerprintphp/storage/custom-storage/) documentation.
+
+## Limitations
+
+- `getByIp()` scans every file. This is slow with many records.
+- `all()` loads everything into memory.
+- No indexing.
+- No automatic cleanup. Old fingerprints remain until you delete them.

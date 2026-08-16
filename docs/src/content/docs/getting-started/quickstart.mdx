@@ -1,0 +1,113 @@
+---
+title: Quick Start
+description: Get fingerprints working in five minutes
+---
+
+## Add the JavaScript
+
+Create your frontend page. The client generates a JavaScript snippet to include in your HTML:
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+use Fingerprintphp\FingerprintClient;
+
+$client = new FingerprintClient();
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My App</title>
+</head>
+<body>
+    <?= $client->getJavaScript([
+        'endpoint' => '/fingerprint.php',
+        'autoSend' => true,
+    ]) ?>
+</body>
+</html>
+```
+
+The script loads FingerprintJS from CDN, collects browser data, and POSTs it to your endpoint.
+
+## Handle the POST
+
+Create `fingerprint.php` to receive the data:
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+use Fingerprintphp\FingerprintClient;
+use Fingerprintphp\Storage\FileStorage;
+
+$client = new FingerprintClient([
+    'storage' => new FileStorage(__DIR__ . '/storage/fingerprints'),
+]);
+
+try {
+    $fingerprint = $client->handleRequest();
+    $client->jsonResponse($fingerprint);
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode(['error' => $e->getMessage()]);
+}
+```
+
+When a visitor loads your page, their fingerprint is stored automatically.
+
+## Look Up a Fingerprint
+
+Retrieve fingerprints anywhere in your application:
+
+```php
+$fingerprint = $client->get($visitorId);
+
+// Core identifiers
+echo $fingerprint->getVisitorId();
+echo $fingerprint->getConfidence();
+echo $fingerprint->getIp();
+echo $fingerprint->getUserAgent();
+
+// Browser info
+echo $fingerprint->getPlatform();
+echo $fingerprint->getVendor();
+echo $fingerprint->getArchitecture();
+
+// Screen
+print_r($fingerprint->getScreenResolution());
+echo $fingerprint->getColorDepth();
+
+// Hardware
+echo $fingerprint->getDeviceMemory();
+echo $fingerprint->getHardwareConcurrency();
+print_r($fingerprint->getTouchSupport());
+
+// Locale
+echo $fingerprint->getTimezone();
+print_r($fingerprint->getLanguages());
+
+// Storage capabilities
+echo $fingerprint->getCookiesEnabled();
+echo $fingerprint->getLocalStorage();
+echo $fingerprint->getSessionStorage();
+
+// Fingerprint signals
+echo $fingerprint->getCanvas();
+echo $fingerprint->getWebgl();
+echo $fingerprint->getAudio();
+print_r($fingerprint->getFonts());
+
+// Browser features
+print_r($fingerprint->getPlugins());
+echo $fingerprint->getPdfViewerEnabled();
+```
+
+To find a fingerprint by IP address:
+
+```php
+$fingerprint = $client->getByIp($_SERVER['REMOTE_ADDR']);
+```
+
+Read the full list of 40+ getters in the [FingerprintData](/fingerprintphp/api/fingerprint-data/) documentation.

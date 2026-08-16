@@ -1,0 +1,14 @@
+.exclude
+
+/vendor/
+composer.lock
+.phpunit.result.cache
+.idea/
+.vscode/
+*.log
+/examples/storage/
+
+# Docs
+docs/node_modules/
+docs/dist/
+docs/.astro/
